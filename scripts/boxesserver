@@ -176,7 +176,39 @@ class BServer:
 <hr />
 <h2 style="margin: 0px 0px 0px 20px;" >""", name, """</h2>
         <p>""", box.__doc__ or "", """</p>
-<form action="%s" method="GET" target="_blank">
+<script>
+function getFormUrl() {
+var url = window.location.href;
+if(window.location.search)
+  url = url.replace(window.location.search, "");
+url += "?";
+var inputs = document.forms[0].querySelectorAll("input,select,textarea");
+var params = {};
+for(var i in inputs)
+{
+  var input = inputs[i];
+  if(!input) continue;
+  if(!input.name) continue;
+  if(!input.value) continue;
+  if(input.type=="radio"&&!input.checked) continue;
+  if(input.type=="checkbox"&&!input.checked) continue;
+  var name = input.name;
+  var val = input.value;
+  if(name=="render")
+    val = "3";
+  params[name] = val;
+  url += name + "=" + encodeURIComponent(val) + "&";
+}
+url = url.substr(0, url.length - 1);
+return url;
+}
+function changeme(){
+// setTimeout(function(){
+  console.log(getFormUrl());
+// },10);
+}
+</script>
+<form action="%s" method="GET" target="_blank" onsubmit="changeme()">
         """ % (action)]
         groupid = 0
         for group in box.argparser._action_groups[3:] + box.argparser._action_groups[:3]:
@@ -193,7 +225,13 @@ class BServer:
             result.append("</table>")
             groupid += 1
         result.append("""
-<p><button name="render" value="1">Generate</button></p>
+<fieldset><legend>Destination</legend>
+<table><tr><td><label><input type="radio" name="render" value="1" checked="checked" /> Preview</label></td>
+  <td><label><input type="radio" name="render" value="2" /> Download</label></td>
+  <td><label><input type="radio" name="render" value="3" /> Setup</label></td>
+  </tr></table>
+</fieldset>
+<p><button>Generate</button></p>
 </form>
 
 </div>
@@ -360,7 +398,7 @@ Create boxes and more with a laser cutter!
         args = [unquote_plus(arg) for arg in
                 environ['QUERY_STRING'].split("&")]
 
-        if "render=1" not in args:
+        if "render=1" not in args and "render=2" not in args:
             defaults = { }
             for a in args:
                 kv = a.split('=')
@@ -370,7 +408,16 @@ Create boxes and more with a laser cutter!
             start_response(status, headers)
             return self.args2html(name, box, "./" + name, defaults=defaults)
         else:
-            args = ["--"+ arg for arg in args if arg != "render=1"]
+            defaults = { }
+            for a in args:
+                kv = a.split('=')
+                if len(kv) == 2:
+                    k, v = kv
+                    defaults[k] = cgi.escape(v, True)
+            downloadme = 0
+            if "render=2" in args:
+              downloadme = 1
+            args = ["--"+ arg for arg in args if arg != "render=1" and arg != "render=2"]
             try:
                 box.parseArgs(args)
             except (ArgumentParserError) as e:
@@ -390,10 +437,12 @@ Create boxes and more with a laser cutter!
                     start_response(status, headers)
                     return self.errorMessage(name, e)
 
-            start_response(status,
-                           box.formats.http_headers.get(
-                               box.format,
-                               [('Content-type', 'application/unknown; charset=utf-8')]))
+            headers = box.formats.http_headers.get(
+                box.format,
+                [('Content-type', 'application/unknown; charset=utf-8')])
+            if name != "TypeTray" and defaults.get("render") == '2':
+                headers.append(('Content-Disposition', "attachment; filename=\"%s_%sx%sx%s.svg\"" % (environ["PATH_INFO"][1:], box.x, box.y, box.h)))
+            start_response(status, headers)
             fd, box.output = tempfile.mkstemp()
             box.open()
             box.render()
