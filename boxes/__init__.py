@@ -80,7 +80,7 @@ def holeCol(func):
     def f(self, *args, **kw):
         self.ctx.stroke()
         with self.saved_context():
-            self.set_source_color(Color.BLUE)
+            self.set_source_color(Color.RED)
             func(self, *args, **kw)
             self.ctx.stroke()
 
@@ -235,7 +235,7 @@ class Boxes:
         defaultgroup = self.argparser.add_argument_group(
                         "Default Settings")
         defaultgroup.add_argument(
-            "--thickness", action="store", type=float, default=3.0,
+            "--thickness", action="store", type=float, default=2.9,
             help="thickness of the material")
         defaultgroup.add_argument(
             "--output", action="store", type=str, default="box.svg",
@@ -251,7 +251,7 @@ class Boxes:
             "--debug", action="store", type=boolarg, default=False,
             help="print surrounding boxes for some structures")
         defaultgroup.add_argument(
-            "--reference", action="store", type=float, default=100,
+            "--reference", action="store", type=float, default=0,
             help="print reference rectangle with given length (zero to disable)")
         defaultgroup.add_argument(
             "--burn", action="store", type=float, default=0.1,
@@ -295,7 +295,7 @@ class Boxes:
             self.set_source_color(Color.BLUE)
         else:
             self.ctx.set_line_width(max(2 * self.burn, 0.05))
-            self.set_source_color(Color.BLACK)
+            self.set_source_color(Color.RED)
 
         self.spacing = 2 * self.burn + 0.5 * self.thickness
         self.ctx.select_font_face("sans-serif")
@@ -1190,7 +1190,7 @@ class Boxes:
         for line in reversed(text):
             self.ctx.show_text(line)
             self.moveTo(0, 1.4 * -lheight)
-        self.set_source_color(Color.BLACK)
+        self.set_source_color(Color.RED)
         self.ctx.set_font_size(10)
 
     tx_sizes = {

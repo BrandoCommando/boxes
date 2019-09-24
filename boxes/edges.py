@@ -543,13 +543,13 @@ Values:
 """
 
     absolute_params = {
-        "surroundingspaces": 2.0,
+        "surroundingspaces": 0.0,
         "angle" : 90.0,
     }
 
     relative_params = {
-        "space": 2.0,
-        "finger": 2.0,
+        "space": 4.0,
+        "finger": 4.0,
         "width": 1.0,
         "edge_width": 1.0,
         "play" : 0.0,
